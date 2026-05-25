@@ -43,8 +43,8 @@ class UploadHelper
     }
 
     /**
-     * @param array<int, UploadedFile>|null $uploads
-     * @param class-string<File|Image>      $modelClass
+     * @param array<int, mixed>|null   $uploads     Raw request payload — entries are filtered at runtime.
+     * @param class-string<File|Image> $modelClass
      */
     private static function storeAll(?array $uploads, string $directory, string $disk, string $modelClass): Collection
     {

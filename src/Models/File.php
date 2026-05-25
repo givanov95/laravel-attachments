@@ -9,9 +9,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property int         $id
+ * @property string      $fileable_type
+ * @property int         $fileable_id
+ * @property string      $original_name
+ * @property string      $unique_name
+ * @property string      $path
+ * @property int         $order
+ * @property string|null $section
+ * @property int|null    $size
+ * @property string|null $url
+ */
 class File extends Model
 {
     protected $fillable = [
+        'fileable_type',
+        'fileable_id',
         'original_name',
         'unique_name',
         'path',

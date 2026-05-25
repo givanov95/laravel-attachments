@@ -9,9 +9,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * @property int         $id
+ * @property string      $imageable_type
+ * @property int         $imageable_id
+ * @property string      $original_name
+ * @property string      $unique_name
+ * @property string      $path
+ * @property int         $order
+ * @property string|null $section
+ * @property int|null    $size
+ * @property string|null $url
+ */
 class Image extends Model
 {
     protected $fillable = [
+        'imageable_type',
+        'imageable_id',
         'original_name',
         'unique_name',
         'path',
