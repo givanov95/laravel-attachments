@@ -8,7 +8,7 @@ Polymorphic file & image attachments for Laravel.
 - `HasImages` + `HasFiles` traits:
     - `setImages($collection, 'section')` / `setFiles($collection, 'section')` — staged + persisted in `saved()` hook
     - Multi-section support, accumulates across calls
-    - Optional `$profileImageColumn` cache (uses `saveQuietly()` to avoid recursion)
+    - Optional `profileImageColumn()` override that caches the first image's path on a column on the parent model (uses `saveQuietly()` to avoid recursion)
     - `deleting()` hook cascades attachment delete
 - `UploadHelper::uploadMultipleImages($request, 'images', 'subdir')` — moves UploadedFile[] to disk, returns ready-to-stage models
 - `FileStr::generateUniqueFileName($uploadedFile)` — collision-safe filenames
@@ -50,7 +50,11 @@ class Product extends Model
     use HasImages, HasFiles;
 
     // optional — cache first image path on this column for fast listing queries
-    protected ?string $profileImageColumn = 'image_path';
+    // optional — cache first image path on this column for fast listing queries
+    protected function profileImageColumn(): ?string
+    {
+        return 'image_path';
+    }
 }
 ```
 

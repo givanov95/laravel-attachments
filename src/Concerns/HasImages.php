@@ -11,14 +11,20 @@ use Illuminate\Support\Collection;
 
 trait HasImages
 {
+    protected Collection $stagedImages;
+
     /**
      * Override on the model to cache the first image's path on a column
      * (e.g. `image_path`) so it can be SELECT-ed without joining `images`.
-     * Leave null to disable.
+     * Return null (default) to disable.
+     *
+     * Using a method instead of a property avoids PHP's trait property
+     * collision when consumers redeclare with a different default.
      */
-    protected ?string $profileImageColumn = null;
-
-    protected Collection $stagedImages;
+    protected function profileImageColumn(): ?string
+    {
+        return null;
+    }
 
     public static function bootHasImages(): void
     {
@@ -96,17 +102,19 @@ trait HasImages
 
     public function refreshProfileImagePath(): void
     {
-        if (! $this->profileImageColumn) {
+        $column = $this->profileImageColumn();
+
+        if (! $column) {
             return;
         }
 
         $newPath = $this->firstImage()->first()?->path;
 
-        if ($this->{$this->profileImageColumn} === $newPath) {
+        if ($this->{$column} === $newPath) {
             return;
         }
 
-        $this->{$this->profileImageColumn} = $newPath;
+        $this->{$column} = $newPath;
         $this->saveQuietly();
     }
 }

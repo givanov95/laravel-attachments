@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-05-25
+
+### Fixed
+- `HasImages::$profileImageColumn` was a property with default `null`. Consumers who tried to override it on their model with `protected ?string $profileImageColumn = 'image_path';` hit a fatal "trait composition incompatible" error because PHP doesn't allow trait + class to redeclare a property with a different default. Replaced the property with a `profileImageColumn(): ?string` method that consumers override instead. **API change:** override the method, not the property.
+
+## [0.1.0] - 2026-05-25
+
 ### Added
 - Initial extraction from `laravel-starter`.
 - `Image` and `File` polymorphic Eloquent models with appended `url` accessor (uses `Storage::disk(config('attachments.disk'))->url()`).
