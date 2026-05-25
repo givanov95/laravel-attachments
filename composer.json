@@ -20,7 +20,13 @@
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
-        "analyse": "vendor/bin/phpstan analyse --memory-limit=512M"
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=512M",
+        "post-install-cmd": [
+            "@php -r \"if (is_dir('.git/hooks') && file_exists('pre-commit')) { @unlink('.git/hooks/pre-commit'); @symlink('../../pre-commit', '.git/hooks/pre-commit'); @chmod('pre-commit', 0755); }\""
+        ],
+        "post-update-cmd": [
+            "@php -r \"if (is_dir('.git/hooks') && file_exists('pre-commit')) { @unlink('.git/hooks/pre-commit'); @symlink('../../pre-commit', '.git/hooks/pre-commit'); @chmod('pre-commit', 0755); }\""
+        ]
     },
     "autoload": {
         "psr-4": {
