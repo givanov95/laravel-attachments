@@ -14,6 +14,7 @@
         "illuminate/routing": "^11.0|^12.0|^13.0"
     },
     "require-dev": {
+        "givanov95/laravel-git-hooks": "^0.1.0",
         "larastan/larastan": "^3.0",
         "orchestra/testbench": "^9.0|^10.0",
         "phpunit/phpunit": "^11.0|^12.0"
@@ -46,7 +47,10 @@
         }
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "givanov95/laravel-git-hooks": true
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true
