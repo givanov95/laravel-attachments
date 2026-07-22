@@ -43,16 +43,25 @@ trait HasImages
         });
     }
 
+    /**
+     * @return MorphMany<Image, $this>
+     */
     public function images(): MorphMany
     {
         return $this->morphMany(Image::class, 'imageable')->orderBy('order');
     }
 
+    /**
+     * @return MorphOne<Image, $this>
+     */
     public function firstImage(): MorphOne
     {
         return $this->morphOne(Image::class, 'imageable')->ofMany('order', 'min');
     }
 
+    /**
+     * @return MorphOne<Image, $this>
+     */
     public function latestImage(): MorphOne
     {
         return $this->morphOne(Image::class, 'imageable')->latestOfMany();

@@ -29,16 +29,25 @@ trait HasFiles
         });
     }
 
+    /**
+     * @return MorphMany<File, $this>
+     */
     public function files(): MorphMany
     {
         return $this->morphMany(File::class, 'fileable')->orderBy('order');
     }
 
+    /**
+     * @return MorphOne<File, $this>
+     */
     public function firstFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')->ofMany('order', 'min');
     }
 
+    /**
+     * @return MorphOne<File, $this>
+     */
     public function latestFile(): MorphOne
     {
         return $this->morphOne(File::class, 'fileable')->latestOfMany();
