@@ -7,6 +7,8 @@ namespace Givanov95\LaravelAttachments\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -20,9 +22,12 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $section
  * @property int|null    $size
  * @property string|null $url
+ * @property Carbon|null $deleted_at
  */
 class File extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'fileable_type',
         'fileable_id',
@@ -35,6 +40,17 @@ class File extends Model
     ];
 
     protected $appends = ['url'];
+
+    protected static function booted(): void
+    {
+        // Physical file removal happens only on a permanent (force) delete,
+        // never on a soft delete. This is the single place the disk is touched.
+        static::forceDeleted(function (File $file): void {
+            if ($file->path) {
+                Storage::disk(config('attachments.disk', 'public'))->delete($file->path);
+            }
+        });
+    }
 
     public function fileable(): MorphTo
     {

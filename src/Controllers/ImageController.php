@@ -9,16 +9,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ImageController extends Controller
 {
     public function destroy(Image $image): RedirectResponse
     {
-        if ($image->path) {
-            Storage::disk(config('attachments.disk', 'public'))->delete($image->path);
-        }
-
+        // Soft delete: the row is trashed and the physical file is kept. It is
+        // removed from disk only on forceDelete (parent purge or attachments:prune).
         $image->delete();
 
         return back()->with('success', __('Image successfully removed'));

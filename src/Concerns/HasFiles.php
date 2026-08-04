@@ -24,9 +24,34 @@ trait HasFiles
             $model->stagedFiles = new Collection();
         });
 
-        static::deleting(function ($model): void {
-            $model->files()->delete();
+        static::deleted(function ($model): void {
+            $forceDeleting = method_exists($model, 'isForceDeleting') && $model->isForceDeleting();
+            $softDeletable = method_exists($model, 'trashed');
+
+            // Force delete, or a parent without SoftDeletes → remove the rows and
+            // their physical files (forceDelete fires the File `forceDeleted` hook).
+            if ($forceDeleting || ! $softDeletable) {
+                $model->files()->withTrashed()->get()->each(function (File $file): void {
+                    $file->forceDelete();
+                });
+
+                return;
+            }
+
+            // Soft delete → soft-delete the children too, stamped with the parent's
+            // exact deleted_at so restore() can match this deletion batch precisely.
+            $model->files()->update(['deleted_at' => $model->deleted_at]);
         });
+
+        // `restoring` is only available on models that use SoftDeletes.
+        if (method_exists(static::class, 'restoring')) {
+            static::restoring(function ($model): void {
+                $model->files()
+                    ->onlyTrashed()
+                    ->where('deleted_at', $model->deleted_at)
+                    ->restore();
+            });
+        }
     }
 
     /**

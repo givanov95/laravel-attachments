@@ -24,4 +24,16 @@ return [
     |
     */
     'middleware' => ['web', 'auth'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prune retention (days)
+    |--------------------------------------------------------------------------
+    |
+    | Default age (in days) used by `php artisan attachments:prune` to decide
+    | which soft-deleted files/images to permanently delete (rows + physical
+    | files). Override per-run with `--days=`.
+    |
+    */
+    'prune_days' => (int) env('ATTACHMENTS_PRUNE_DAYS', 30),
 ];

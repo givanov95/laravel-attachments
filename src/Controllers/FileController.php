@@ -16,10 +16,8 @@ class FileController extends Controller
 {
     public function destroy(File $file): RedirectResponse
     {
-        if ($file->path) {
-            Storage::disk(config('attachments.disk', 'public'))->delete($file->path);
-        }
-
+        // Soft delete: the row is trashed and the physical file is kept. It is
+        // removed from disk only on forceDelete (parent purge or attachments:prune).
         $file->delete();
 
         return back()->with('success', __('File successfully removed'));

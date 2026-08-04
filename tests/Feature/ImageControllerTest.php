@@ -20,7 +20,7 @@ class ImageControllerTest extends TestCase
         $app['config']->set('attachments.middleware', ['web']);
     }
 
-    public function test_destroy_removes_image_record_and_disk_file(): void
+    public function test_destroy_soft_deletes_image_and_keeps_disk_file(): void
     {
         Storage::disk('fake')->put('images/a.jpg', 'fake-bytes');
 
@@ -33,6 +33,25 @@ class ImageControllerTest extends TestCase
         ]);
 
         $this->delete(route('images.destroy', $image));
+
+        // Row is trashed (recoverable), physical file is kept until forceDelete.
+        $this->assertSoftDeleted('images', ['id' => $image->id]);
+        Storage::disk('fake')->assertExists('images/a.jpg');
+    }
+
+    public function test_force_delete_removes_image_record_and_disk_file(): void
+    {
+        Storage::disk('fake')->put('images/a.jpg', 'fake-bytes');
+
+        $image = Image::create([
+            'original_name'  => 'a.jpg',
+            'unique_name'    => 'a.jpg',
+            'path'           => 'images/a.jpg',
+            'imageable_type' => 'Stub',
+            'imageable_id'   => 1,
+        ]);
+
+        $image->forceDelete();
 
         $this->assertDatabaseMissing('images', ['id' => $image->id]);
         Storage::disk('fake')->assertMissing('images/a.jpg');

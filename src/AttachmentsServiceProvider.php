@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Givanov95\LaravelAttachments;
 
+use Givanov95\LaravelAttachments\Console\PruneAttachmentsCommand;
 use Illuminate\Support\ServiceProvider;
 
 class AttachmentsServiceProvider extends ServiceProvider
@@ -19,6 +20,10 @@ class AttachmentsServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
 
         if ($this->app->runningInConsole()) {
+            $this->commands([
+                PruneAttachmentsCommand::class,
+            ]);
+
             $this->publishes([
                 __DIR__.'/../config/attachments.php' => config_path('attachments.php'),
             ], 'attachments-config');

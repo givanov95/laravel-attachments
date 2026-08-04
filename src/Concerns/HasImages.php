@@ -38,9 +38,38 @@ trait HasImages
             $model->refreshProfileImagePath();
         });
 
-        static::deleting(function ($model): void {
-            $model->images()->delete();
+        static::deleted(function ($model): void {
+            $forceDeleting = method_exists($model, 'isForceDeleting') && $model->isForceDeleting();
+            $softDeletable = method_exists($model, 'trashed');
+
+            // Force delete, or a parent without SoftDeletes → remove the rows and
+            // their physical files (forceDelete fires the Image `forceDeleted` hook).
+            if ($forceDeleting || ! $softDeletable) {
+                $model->images()->withTrashed()->get()->each(function (Image $image): void {
+                    $image->forceDelete();
+                });
+
+                return;
+            }
+
+            // Soft delete → soft-delete the children too, stamped with the parent's
+            // exact deleted_at so restore() can match this deletion batch precisely.
+            $model->images()->update(['deleted_at' => $model->deleted_at]);
         });
+
+        // `restoring`/`restored` are only available on models that use SoftDeletes.
+        if (method_exists(static::class, 'restoring')) {
+            static::restoring(function ($model): void {
+                $model->images()
+                    ->onlyTrashed()
+                    ->where('deleted_at', $model->deleted_at)
+                    ->restore();
+            });
+
+            static::restored(function ($model): void {
+                $model->refreshProfileImagePath();
+            });
+        }
     }
 
     /**

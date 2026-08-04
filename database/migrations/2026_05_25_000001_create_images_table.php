@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('section')->nullable();
             $table->unsignedBigInteger('size')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['imageable_type', 'imageable_id', 'section']);
         });

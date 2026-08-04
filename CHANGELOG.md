@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-04
+
+### Added
+- `File` and `Image` now use `SoftDeletes` (new `deleted_at` migration, auto-run via `loadMigrationsFrom`; idempotent so existing installs only need `php artisan migrate`).
+- Soft-delete-aware cascade in `HasFiles`/`HasImages`: deleting a parent that uses `SoftDeletes` now **soft-deletes** its attachments (keeping rows and physical files), and **restoring** the parent restores exactly the attachments removed with it. A parent without `SoftDeletes`, or a `forceDelete()`, permanently removes the rows and their physical files.
+- `attachments:prune {--days=}` command (config `attachments.prune_days`, default 30) to permanently delete old soft-deleted attachments and their physical files.
+
+### Changed
+- Physical file deletion is now centralized in the models' `forceDeleted` hook — the disk is touched only on a permanent delete, never on a soft delete.
+- `FileController::destroy` / `ImageController::destroy` now soft-delete the attachment (recoverable) and keep the physical file; it is removed on `forceDelete`/prune.
+
+### Fixed
+- Soft-deleting a parent model no longer permanently destroys its attachments. Previously the `deleting` hook hard-deleted the `files`/`images` rows even on a soft delete, so restoring the parent came back without its files (and physical files were left orphaned on disk).
+
 ## [0.1.1] - 2026-05-25
 
 ### Fixed
