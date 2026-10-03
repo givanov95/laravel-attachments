@@ -32,10 +32,11 @@ Defaults in `config/attachments.php` (publishable):
 return [
     'disk' => env('ATTACHMENTS_DISK', 'public'),
     'middleware' => ['web', 'auth'],
+    'abilities' => ['view' => 'view', 'update' => 'update'],
 ];
 ```
 
-Override `middleware` to add `'verified'`, role guards, custom guards, etc. The image/file routes are registered under this middleware stack.
+Override `middleware` to add `'verified'`, role guards, custom guards, etc. The image/file routes are registered under this middleware stack. `abilities` maps the two policy abilities the routes check (see [Authorization](#authorization)).
 
 ## Usage
 
@@ -118,6 +119,35 @@ Auto-registered (id-based, behind `['web', 'auth']` by default):
 | GET | `/files/{file}/download` | `files.download` |
 
 The `order` endpoints accept `{ orderArray: [id, id, ...] }` and rewrite the `order` column to the array's position (1-indexed).
+
+## Authorization
+
+`auth` only proves the visitor is logged in — it says nothing about *whose* attachment they are touching. Since v1.3.0 every route authorizes the attachment against the model it hangs off (`fileable` / `imageable`) through Laravel's Gate:
+
+| Route | Ability checked on the parent model |
+|---|---|
+| `files.download` | `view` |
+| `images.destroy`, `files.destroy` | `update` |
+| `images.order`, `files.order` | `update` (for **every** parent referenced in `orderArray`; one foreign id rejects the whole request) |
+
+So each model that uses `HasImages` / `HasFiles` needs a policy with these abilities:
+
+```php
+class ProjectPolicy
+{
+    public function view(User $user, Project $project): bool { /* ... */ }
+
+    public function update(User $user, Project $project): bool { /* ... */ }
+}
+```
+
+The check **fails closed**: a parent model without a policy, or an attachment whose parent no longer exists, gets a `403`. If your policies use other ability names, remap them in `config/attachments.php` under `abilities`.
+
+> **Upgrading from < 1.3.0:** add the policies above *before* updating, otherwise the routes will answer `403` for every user. Versions up to 1.2.0 let any authenticated user delete, reorder or download other users' attachments (GHSA-6vf2-w3m8-6jqm) — update as soon as the policies are in place.
+
+### Stored file names
+
+`UploadHelper` stores uploads as `<sanitized-stem>_<time>_<uniqid>.<ext>`. The extension is derived from the detected content type (never from the client-supplied name) and executable extensions such as `php`, `phtml` or `sh` are stored as `.bin`. The client's original name is kept in `original_name` and used for downloads. You should still validate uploads in your own requests.
 
 ## Development
 
