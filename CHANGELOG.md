@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-03
+
+### Security
+- Fixed missing authorization on the image/file routes (GHSA-6vf2-w3m8-6jqm). Up to 1.2.0 any authenticated user could soft-delete, reorder or download other users' attachments by id. `images.destroy`, `files.destroy`, `images.order`, `files.order` and `files.download` now authorize the attachment against its parent model (`fileable` / `imageable`) through the Gate: `view` for downloads, `update` for everything else (for every parent referenced in an `orderArray`). The check fails closed — a parent without a policy, or an orphaned attachment, answers `403`.
+- `FileStr::generateUniqueFileName()` no longer keeps the client-supplied extension. The extension is derived from the detected MIME type, executable extensions (`php`, `phtml`, `phar`, `sh`, …) become `.bin`, and the stem is reduced to letters, digits, `_` and `-` (Unicode letters are kept, max 80 chars).
+
+### Added
+- `attachments.abilities` config to remap the two policy abilities (`view`, `update`).
+
+### Upgrade notes
+- **Breaking behaviour:** parent models that use `HasImages` / `HasFiles` need a policy with `view` and `update` abilities, otherwise the routes return `403`. Add the policies before updating. See the README's *Authorization* section.
+
 ## [1.2.0] - 2026-08-04
 
 ### Added
