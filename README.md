@@ -153,15 +153,19 @@ The check **fails closed**: a parent model without a policy, or an attachment wh
 
 ```bash
 composer install
-composer test          # PHPUnit (15 tests)
+composer test          # PHPUnit
 composer analyse       # PHPStan level 5
 ```
 
 ### Pre-commit hook
 
-`composer install` / `composer update` symlinks the repo's `pre-commit` script into `.git/hooks/pre-commit`. It runs `composer test` + `composer analyse` before any commit that touches `.php` files — replacement for CI since the repo is private.
+`composer install` / `composer update` installs a `pre-commit` hook into `.git/hooks/` via the [`givanov95/laravel-git-hooks`](https://github.com/givanov95/laravel-git-hooks) plugin (the hook itself lives in `vendor/`). Before each commit it runs php-cs-fixer on staged files (when configured), blocks leftover `dd(` / `dump(` calls and runs the test suite.
 
-Bypass with `git commit --no-verify` when you genuinely need to (WIP commit, doc-only change you've already validated).
+It is a fast-feedback gate only. Skip it for one commit with `SKIP_HOOK=1 git commit ...` (or `git commit --no-verify`).
+
+### CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the tests and PHPStan on PHP 8.3 and 8.4 for every pull request and push to `main`. Dependabot keeps dependencies and the workflow up to date.
 
 ## License
 
