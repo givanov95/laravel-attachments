@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Internal de-duplication of the image/file code, no behaviour change. `Image` and `File` now extend a new abstract `Attachment` model (soft deletes, `url` accessor, physical-file removal on force delete); the delete/restore/staging logic of `HasImages` / `HasFiles` lives in one place (`AttachmentLifecycle`), and the two controllers share `AttachmentController` for `destroy` / `order`. Public methods, relations, routes and flash messages are unchanged.
+
 ## [1.3.0] - 2026-10-03
 
 ### Security

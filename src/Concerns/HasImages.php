@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Givanov95\LaravelAttachments\Concerns;
 
 use Givanov95\LaravelAttachments\Models\Image;
+use Givanov95\LaravelAttachments\Support\AttachmentLifecycle;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Collection;
@@ -39,31 +40,13 @@ trait HasImages
         });
 
         static::deleted(function ($model): void {
-            $forceDeleting = method_exists($model, 'isForceDeleting') && $model->isForceDeleting();
-            $softDeletable = method_exists($model, 'trashed');
-
-            // Force delete, or a parent without SoftDeletes → remove the rows and
-            // their physical files (forceDelete fires the Image `forceDeleted` hook).
-            if ($forceDeleting || ! $softDeletable) {
-                $model->images()->withTrashed()->get()->each(function (Image $image): void {
-                    $image->forceDelete();
-                });
-
-                return;
-            }
-
-            // Soft delete → soft-delete the children too, stamped with the parent's
-            // exact deleted_at so restore() can match this deletion batch precisely.
-            $model->images()->update(['deleted_at' => $model->deleted_at]);
+            AttachmentLifecycle::deleted($model, $model->images());
         });
 
         // `restoring`/`restored` are only available on models that use SoftDeletes.
         if (method_exists(static::class, 'restoring')) {
             static::restoring(function ($model): void {
-                $model->images()
-                    ->onlyTrashed()
-                    ->where('deleted_at', $model->deleted_at)
-                    ->restore();
+                AttachmentLifecycle::restoring($model, $model->images());
             });
 
             static::restored(function ($model): void {
@@ -106,16 +89,9 @@ trait HasImages
             return $this;
         }
 
-        $maxOrder = (int) $this->images()->where('section', $section)->max('order');
-
-        foreach ($uploadedImages->values() as $index => $image) {
-            $image->imageable_type = $this->getMorphClass();
-            $image->imageable_id = $this->id;
-            $image->section = $section;
-            $image->order = $maxOrder + $index + 1;
-
-            $this->stagedImages->push($image);
-        }
+        $this->stagedImages = $this->stagedImages->merge(
+            AttachmentLifecycle::stage($this, $this->images(), $uploadedImages, $section)
+        );
 
         return $this;
     }
@@ -126,16 +102,7 @@ trait HasImages
      */
     public function getGroupedImages(array $sections): array
     {
-        $grouped = [];
-
-        foreach ($sections as $section) {
-            $grouped[$section] = $this->images
-                ->where('section', $section)
-                ->sortBy('order')
-                ->values();
-        }
-
-        return $grouped;
+        return AttachmentLifecycle::group($this->images, $sections);
     }
 
     public function refreshProfileImagePath(): void

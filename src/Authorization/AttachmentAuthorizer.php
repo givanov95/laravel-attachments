@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Givanov95\LaravelAttachments\Authorization;
 
-use Givanov95\LaravelAttachments\Models\File;
-use Givanov95\LaravelAttachments\Models\Image;
+use Givanov95\LaravelAttachments\Models\Attachment;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -22,7 +21,7 @@ class AttachmentAuthorizer
     public const UPDATE = 'update';
 
     /**
-     * @param iterable<File|Image> $attachments
+     * @param iterable<Attachment> $attachments
      * @param self::VIEW|self::UPDATE $action Mapped to a policy ability via `attachments.abilities`.
      */
     public static function authorize(iterable $attachments, string $action): void
@@ -32,9 +31,7 @@ class AttachmentAuthorizer
         $parents = [];
 
         foreach ($attachments as $attachment) {
-            $parent = $attachment instanceof File
-                ? $attachment->fileable
-                : $attachment->imageable;
+            $parent = $attachment->attachedTo();
 
             // An orphaned attachment has no owner to inherit permissions from.
             abort_if($parent === null, 403);
