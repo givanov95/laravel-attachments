@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Givanov95\LaravelAttachments\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int         $id
@@ -24,10 +20,8 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $url
  * @property Carbon|null $deleted_at
  */
-class Image extends Model
+class Image extends Attachment
 {
-    use SoftDeletes;
-
     protected $fillable = [
         'imageable_type',
         'imageable_id',
@@ -39,30 +33,13 @@ class Image extends Model
         'size',
     ];
 
-    protected $appends = ['url'];
-
-    protected static function booted(): void
-    {
-        // Physical file removal happens only on a permanent (force) delete,
-        // never on a soft delete. This is the single place the disk is touched.
-        static::forceDeleted(function (Image $image): void {
-            if ($image->path) {
-                Storage::disk(config('attachments.disk', 'public'))->delete($image->path);
-            }
-        });
-    }
-
     public function imageable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    protected function url(): Attribute
+    public function morphName(): string
     {
-        return Attribute::get(
-            fn () => $this->path
-                ? Storage::disk(config('attachments.disk', 'public'))->url($this->path)
-                : null
-        );
+        return 'imageable';
     }
 }
