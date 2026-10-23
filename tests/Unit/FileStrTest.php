@@ -60,7 +60,8 @@ class FileStrTest extends TestCase
     {
         $this->assertStringEndsWith('.png', FileStr::generateUniqueFileName($this->sniffedUpload((string) base64_decode(self::PNG))));
         $this->assertStringEndsWith('.pdf', FileStr::generateUniqueFileName($this->sniffedUpload("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n")));
-        $this->assertStringEndsWith('.csv', FileStr::generateUniqueFileName($this->sniffedUpload("a,b,c\n1,2,3\n")));
+        // Older libmagic builds sniff CSV as text/plain; both extensions are safe.
+        $this->assertMatchesRegularExpression('/\.(csv|txt)$/', FileStr::generateUniqueFileName($this->sniffedUpload("a,b,c\n1,2,3\n")));
         $this->assertStringEndsWith('.txt', FileStr::generateUniqueFileName($this->sniffedUpload("Just some notes.\nSecond line.\n")));
     }
 
