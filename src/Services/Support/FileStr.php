@@ -9,14 +9,20 @@ use Illuminate\Http\UploadedFile;
 class FileStr
 {
     /**
-     * Extensions a web server may execute or interpret. Never stored as-is,
-     * whatever the client sent or the content sniffing detected.
+     * Extensions kept as-is by default. Anything else — including content a
+     * browser renders on the app's origin (html, svg, xml, js) or a server may
+     * execute (php, cgi, …) — is stored as `.bin`. Apps can opt in to more
+     * through the `attachments.extra_extensions` config key.
      */
-    private const UNSAFE_EXTENSIONS = [
-        'php', 'phtml', 'phar', 'pht', 'phps', 'pgif', 'inc',
-        'shtml', 'shtm', 'stm', 'cgi', 'pl', 'py', 'rb', 'sh', 'bash',
-        'asp', 'aspx', 'ashx', 'cer', 'jsp', 'jspx', 'war',
-        'exe', 'dll', 'bat', 'cmd', 'com', 'msi', 'htaccess', 'htpasswd',
+    private const ALLOWED_EXTENSIONS = [
+        // images
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'heic', 'heif', 'bmp', 'tif', 'tiff',
+        // documents
+        'pdf', 'txt', 'csv', 'rtf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp',
+        // archives
+        'zip', '7z', 'rar', 'gz', 'tar',
+        // audio / video
+        'mp3', 'm4a', 'wav', 'ogg', 'mp4', 'mov', 'webm',
     ];
 
     /**
@@ -43,10 +49,49 @@ class FileStr
     {
         $extension = strtolower((string) $file->guessExtension());
 
-        if ($extension === '' || ! preg_match('/^[a-z0-9]{1,10}$/', $extension)) {
+        if (! self::isValidExtension($extension)) {
             return 'bin';
         }
 
-        return in_array($extension, self::UNSAFE_EXTENSIONS, true) ? 'bin' : $extension;
+        $allowed = in_array($extension, self::ALLOWED_EXTENSIONS, true)
+            || in_array($extension, self::extraExtensions(), true);
+
+        return $allowed ? $extension : 'bin';
+    }
+
+    /**
+     * Extensions the app explicitly allowed on top of the default list,
+     * normalized to lowercase without a leading dot. Invalid entries are dropped.
+     *
+     * @return list<string>
+     */
+    private static function extraExtensions(): array
+    {
+        $configured = config('attachments.extra_extensions', []);
+
+        if (! is_array($configured)) {
+            return [];
+        }
+
+        $extensions = [];
+
+        foreach ($configured as $value) {
+            if (! is_string($value)) {
+                continue;
+            }
+
+            $extension = strtolower(ltrim(trim($value), '.'));
+
+            if (self::isValidExtension($extension)) {
+                $extensions[] = $extension;
+            }
+        }
+
+        return $extensions;
+    }
+
+    private static function isValidExtension(string $extension): bool
+    {
+        return preg_match('/^[a-z0-9]{1,10}$/', $extension) === 1;
     }
 }

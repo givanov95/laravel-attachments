@@ -33,10 +33,11 @@ return [
     'disk' => env('ATTACHMENTS_DISK', 'public'),
     'middleware' => ['web', 'auth'],
     'abilities' => ['view' => 'view', 'update' => 'update'],
+    'extra_extensions' => [],
 ];
 ```
 
-Override `middleware` to add `'verified'`, role guards, custom guards, etc. The image/file routes are registered under this middleware stack. `abilities` maps the two policy abilities the routes check (see [Authorization](#authorization)).
+Override `middleware` to add `'verified'`, role guards, custom guards, etc. The image/file routes are registered under this middleware stack. `abilities` maps the two policy abilities the routes check (see [Authorization](#authorization)). `extra_extensions` allows file extensions beyond the safe default list. This is dangerous, so read [Stored file names](#stored-file-names) first.
 
 ## Usage
 
@@ -147,7 +148,28 @@ The check **fails closed**: a parent model without a policy, or an attachment wh
 
 ### Stored file names
 
-`UploadHelper` stores uploads as `<sanitized-stem>_<time>_<uniqid>.<ext>`. The extension is derived from the detected content type (never from the client-supplied name) and executable extensions such as `php`, `phtml` or `sh` are stored as `.bin`. The client's original name is kept in `original_name` and used for downloads. You should still validate uploads in your own requests.
+`UploadHelper` stores uploads as `<sanitized-stem>_<time>_<uniqid>.<ext>`. The extension is derived from the detected content type (never from the client-supplied name). It is kept only if it is on the safe default list; anything else is stored as `.bin`:
+
+| Kind | Extensions |
+|---|---|
+| Images | `jpg` `jpeg` `png` `gif` `webp` `avif` `heic` `heif` `bmp` `tif` `tiff` |
+| Documents | `pdf` `txt` `csv` `rtf` `doc` `docx` `xls` `xlsx` `ppt` `pptx` `odt` `ods` `odp` |
+| Archives | `zip` `7z` `rar` `gz` `tar` |
+| Audio / video | `mp3` `m4a` `wav` `ogg` `mp4` `mov` `webm` |
+
+Content a browser renders on your domain (`html`, `xhtml`, `svg`, `xml`, …) and anything a server may execute (`php`, `phtml`, `cgi`, `sh`, …) therefore ends up as `.bin`, and is served as a download rather than a page. The client's original name is kept in `original_name` and used for downloads. You should still validate uploads in your own requests.
+
+#### Allowing more extensions (dangerous)
+
+To keep an extension that is not on the list, add it explicitly in `config/attachments.php`:
+
+```php
+'extra_extensions' => ['svg'],
+```
+
+> **Warning:** files are served straight from the storage disk. On a public disk an uploaded `html`, `htm`, `xhtml`, `svg`, `xml` or `js` file runs scripts on your app's domain: this is stored XSS, and it can steal sessions or perform actions as the logged-in user. `php`, `phtml`, `cgi` and similar may even be executed by the web server. Only add such extensions when every uploader is trusted, or when the disk is not publicly served or the web server sends these files as downloads (`Content-Disposition: attachment`).
+
+Entries are case-insensitive, a leading dot is ignored (`'.SVG'` works), and invalid values are skipped.
 
 ## Development
 
