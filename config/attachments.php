@@ -49,6 +49,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Extra file extensions (DANGEROUS — opt in explicitly)
+    |--------------------------------------------------------------------------
+    |
+    | Uploads keep their detected extension only when it is on the package's
+    | safe list (common images, office documents, archives, audio and video);
+    | everything else is stored as `.bin`. List more extensions here, e.g.
+    | ['svg', 'xml'], to keep them as well.
+    |
+    | WARNING: files are served straight from the storage disk. On a public
+    | disk an uploaded `html`, `htm`, `xhtml`, `svg`, `xml` or `js` file runs
+    | scripts on your app's domain (stored XSS: session theft, actions as the
+    | logged-in user), and `php`, `phtml`, `cgi` and similar may be executed
+    | by the web server. Only add such extensions when every uploader is
+    | trusted, or when the disk is not publicly served / the web server sends
+    | these files as downloads (`Content-Disposition: attachment`).
+    |
+    */
+    'extra_extensions' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Prune retention (days)
     |--------------------------------------------------------------------------
     |
