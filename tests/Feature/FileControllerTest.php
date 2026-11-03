@@ -77,7 +77,10 @@ class FileControllerTest extends TestCase
     {
         $file = $this->makeFile($this->makeOwner(1));
 
-        $this->actingAsUser(1)->delete(route('files.destroy', $file));
+        $this->actingAsUser(1)->delete(route('files.destroy', $file))
+            // Blade apps read the session, Inertia apps the toast in Inertia's flash data.
+            ->assertSessionHas('success', 'File successfully removed')
+            ->assertSessionHas('inertia.flash_data.toast', ['type' => 'success', 'message' => 'File successfully removed']);
 
         $this->assertSoftDeleted('files', ['id' => $file->id]);
         Storage::disk('fake')->assertExists('files/doc.pdf');
