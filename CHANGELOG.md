@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-03
+
+### Fixed
+- Deleting a file or an image now shows the toast in Inertia apps without a bridge in the app. When `inertiajs/inertia-laravel` is installed, `destroy` also flashes `Inertia::flash('toast', ['type' => 'success', 'message' => …])`, which `router.on('flash')` receives. `session('success')` is still flashed for Blade apps. Inertia stays optional (`suggest`).
+
 ## [1.4.0] - 2026-10-23
 
 ### Security

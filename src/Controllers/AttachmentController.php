@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 abstract class AttachmentController extends Controller
 {
@@ -20,6 +21,20 @@ abstract class AttachmentController extends Controller
         // Soft delete: the row is trashed and the physical file is kept. It is
         // removed from disk only on forceDelete (parent purge or attachments:prune).
         $attachment->delete();
+
+        return $this->backWithSuccess($message);
+    }
+
+    /**
+     * Blade apps read the message from the session (`session('success')`). Inertia apps show
+     * toasts from Inertia flash data (`page.flash.toast`, the `flash` event), so when Inertia is
+     * installed the message is flashed there too and the app needs no bridge of its own.
+     */
+    protected function backWithSuccess(string $message): RedirectResponse
+    {
+        if (class_exists(Inertia::class)) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
+        }
 
         return back()->with('success', $message);
     }

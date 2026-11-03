@@ -15,9 +15,13 @@
     },
     "require-dev": {
         "givanov95/laravel-git-hooks": "^1.1",
+        "inertiajs/inertia-laravel": "^3.0",
         "larastan/larastan": "^3.0",
         "orchestra/testbench": "^9.0|^10.0|^11.0",
         "phpunit/phpunit": "^11.0|^12.0|^13.0"
+    },
+    "suggest": {
+        "inertiajs/inertia-laravel": "^3.0: Inertia apps get the success message as Inertia flash data (page.flash.toast) as well"
     },
     "scripts": {
         "test": "vendor/bin/phpunit",
